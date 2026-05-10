@@ -36,8 +36,9 @@ st.markdown("""
 
 @st.cache_data
 def load_data():
-    interactions = pd.read_csv("interactions_train.csv")
-    items = pd.read_csv("items.csv")
+    base_url = "https://raw.githubusercontent.com/charleliebrun-afk/ML-BROMET-BRUN/87b14e8d13483b707fc94db41bc47da4f8469bf6/kaggle_data"
+    interactions = pd.read_csv(f"{base_url}/interactions_train.csv")
+    items = pd.read_csv(f"{base_url}/items.csv")
     return interactions, items
 
 interactions, items = load_data()
@@ -94,6 +95,7 @@ st.markdown("<h1>Library Recommender</h1>", unsafe_allow_html=True)
 st.markdown('<p class="subtitle">Discover books you might love, based on your reading history.</p>',
     unsafe_allow_html=True)
 
+st.markdown('<p style="font-size:0.9rem; color:#aaa; margin-bottom:6px;">Enter your user ID to get personalised book recommendations</p>', unsafe_allow_html=True)
 col1, col2 = st.columns([2, 1])
 with col1:
     user_id = st.number_input("User ID", min_value=0,
@@ -105,7 +107,6 @@ with col2:
 if search:
     recommended_ids, already_read = get_recommendations(user_id)
 
-    # Historique
     st.markdown('<p class="section-title">Reading history</p>', unsafe_allow_html=True)
     history = items[items["i"].isin(already_read)].head(8)
     if history.empty:
@@ -132,25 +133,21 @@ if search:
             cover_url = get_cover_url(isbn)
             gb_info = get_google_books_info(isbn) if not pd.isna(str(isbn)) else {}
 
-            # Couverture
             if cover_url:
                 cover_html = f'<img src="{cover_url}" class="book-cover"/>'
             else:
                 cover_html = f'<div class="no-cover">{title[:40]}</div>'
 
-            # Métadonnées
             meta = ""
             if gb_info.get("pages"):
                 meta += f'{gb_info["pages"]} pages'
             if gb_info.get("categories"):
                 meta += f' · {gb_info["categories"][0]}'
 
-            # Description
             desc = ""
             if gb_info.get("description"):
                 desc = gb_info["description"][:120] + "..."
 
-            # Étoiles
             stars = ""
             if gb_info.get("rating"):
                 stars = "★" * int(gb_info["rating"]) + "☆" * (5 - int(gb_info["rating"]))

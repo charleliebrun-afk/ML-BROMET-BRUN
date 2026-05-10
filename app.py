@@ -7,30 +7,45 @@ st.set_page_config(page_title="Library Recommender", page_icon="📖", layout="w
 st.markdown("""
 <style>
     .main { background-color: #fafaf8; }
-    h1 { font-size: 2rem; font-weight: 600; color: #1a1a1a; letter-spacing: -0.5px; }
-    .subtitle { color: #888; font-size: 1rem; margin-top: -10px; margin-bottom: 30px; }
-    .section-title { font-size: 0.85rem; font-weight: 600; letter-spacing: 0.1em;
-        text-transform: uppercase; color: #aaa; margin-bottom: 15px; }
-    .history-tag { display: inline-block; background: #f0ede8; color: #555;
-        padding: 4px 10px; border-radius: 20px; font-size: 0.78rem; margin: 3px; }
-    .book-card { background: #fff; border: 1px solid #f0ede8; border-radius: 10px;
-        padding: 12px; height: 480px; display: flex; flex-direction: column; }
+    h1 { font-size: 2.2rem; font-weight: 700; color: #1a1a1a; letter-spacing: -1px; margin-bottom: 0; }
+    .subtitle { color: #888; font-size: 1rem; margin-top: 4px; margin-bottom: 6px; }
+    .stat { color: #bbb; font-size: 0.8rem; margin-bottom: 24px; }
+    .divider { border: none; border-top: 1px solid #f0ede8; margin: 16px 0 24px 0; }
+    .section-title { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.12em;
+        text-transform: uppercase; color: #ccc; margin-bottom: 16px; }
+    .history-tag { display: inline-block; background: #f5f2ee; color: #666;
+        padding: 5px 12px; border-radius: 20px; font-size: 0.78rem; margin: 3px; }
+    .book-card {
+        background: #fff;
+        border: 1px solid #efefef;
+        border-radius: 12px;
+        padding: 14px;
+        height: 480px;
+        display: flex;
+        flex-direction: column;
+        transition: box-shadow 0.2s ease, transform 0.2s ease;
+        cursor: pointer;
+    }
+    .book-card:hover {
+        box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+        transform: translateY(-3px);
+    }
     .book-cover { width: 100%; height: 180px; object-fit: cover;
         border-radius: 6px; margin-bottom: 10px; }
-    .no-cover { height: 180px; background: #f0ede8; border-radius: 6px;
+    .no-cover { height: 180px; background: #f5f2ee; border-radius: 6px;
         display: flex; align-items: center; justify-content: center;
-        color: #bbb; font-size: 0.75rem; text-align: center;
+        color: #ccc; font-size: 0.75rem; text-align: center;
         padding: 10px; margin-bottom: 10px; }
     .book-title { font-size: 0.82rem; font-weight: 600; color: #1a1a1a; line-height: 1.3; }
     .book-author { font-size: 0.75rem; color: #999; margin-top: 3px; }
-    .book-meta { font-size: 0.72rem; color: #bbb; margin-top: 3px; }
-    .book-description { font-size: 0.73rem; color: #777; line-height: 1.5;
+    .book-meta { font-size: 0.72rem; color: #ccc; margin-top: 3px; }
+    .book-description { font-size: 0.73rem; color: #888; line-height: 1.5;
         margin-top: 6px; flex-grow: 1; overflow: hidden; }
     div[data-testid="stButton"] button {
         background: #1a1a1a; color: white; border: none;
         padding: 10px 24px; border-radius: 6px; font-size: 0.9rem;
-        font-weight: 500; cursor: pointer; }
-    div[data-testid="stButton"] button:hover { background: #333; }
+        font-weight: 500; cursor: pointer; transition: background 0.2s; }
+    div[data-testid="stButton"] button:hover { background: #444; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -92,8 +107,9 @@ def get_recommendations(user_id, n=10):
 
 # Header
 st.markdown("<h1>Library Recommender</h1>", unsafe_allow_html=True)
-st.markdown('<p class="subtitle">Discover books you might love, based on your reading history.</p>',
-    unsafe_allow_html=True)
+st.markdown('<p class="subtitle">Discover books you might love, based on your reading history.</p>', unsafe_allow_html=True)
+st.markdown(f'<p class="stat">Recommending from a library of {len(items):,} books · {len(interactions):,} interactions</p>', unsafe_allow_html=True)
+st.markdown('<hr class="divider">', unsafe_allow_html=True)
 
 st.markdown('<p style="font-size:0.9rem; color:#aaa; margin-bottom:6px;">Enter your user ID to get personalised book recommendations</p>', unsafe_allow_html=True)
 col1, col2 = st.columns([2, 1])
@@ -110,8 +126,7 @@ if search:
     st.markdown('<p class="section-title">Reading history</p>', unsafe_allow_html=True)
     history = items[items["i"].isin(already_read)].head(8)
     if history.empty:
-        st.markdown('<p style="color:#aaa;font-size:0.85rem;">No history found for this user.</p>',
-            unsafe_allow_html=True)
+        st.markdown('<p style="color:#aaa;font-size:0.85rem;">No history found for this user.</p>', unsafe_allow_html=True)
     else:
         tags_html = "".join([
             f'<span class="history-tag">{str(row["Title"]).rstrip("/").strip()[:35]}</span>'
@@ -161,5 +176,7 @@ if search:
                 <div class="book-meta">{stars}</div>
                 <div class="book-description">{desc}</div>
             </div>
+            """
+            st.markdown(card_html, unsafe_allow_html=True)
             """
             st.markdown(card_html, unsafe_allow_html=True)

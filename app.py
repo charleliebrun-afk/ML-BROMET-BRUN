@@ -4,6 +4,7 @@ import requests
 
 st.set_page_config(page_title="Library Recommender", page_icon="📖", layout="wide")
 
+# library design 
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500&display=swap');
@@ -125,7 +126,6 @@ h1 {
 .book-meta { font-size: 0.7rem; color: #5a4a2a; margin-top: 3px; }
 .book-description { font-size: 0.71rem; color: #7a6a4a; line-height: 1.5; margin-top: 6px; flex-grow: 1; overflow: hidden; }
 
-/* Login page */
 .login-container {
     max-width: 420px;
     margin: 80px auto;
@@ -180,9 +180,7 @@ div[data-testid="stButton"] button {
     width: 100% !important;
 }
 
-div[data-testid="stButton"] button:hover {
-    background: #a07840 !important;
-}
+div[data-testid="stButton"] button:hover { background: #a07840 !important; }
 
 div[data-testid="stNumberInput"] input {
     background: rgba(232, 213, 163, 0.06) !important;
@@ -193,12 +191,12 @@ div[data-testid="stNumberInput"] input {
 
 .stRadio label { color: #9a8a6a !important; }
 .stRadio div { gap: 12px !important; }
-
 [data-testid="stMarkdownContainer"] p { color: #9a8a6a; }
 </style>
 """, unsafe_allow_html=True)
 
-# ── Data loading ──────────────────────────────────────────────────────────────
+
+# load the datasets from GitHub
 @st.cache_data
 def load_data():
     base_url = "https://raw.githubusercontent.com/charleliebrun-afk/ML-BROMET-BRUN/87b14e8d13483b707fc94db41bc47da4f8469bf6/kaggle_data"
@@ -206,6 +204,8 @@ def load_data():
     items = pd.read_csv(f"{base_url}/items.csv")
     return interactions, items
 
+
+# Load the precomputed recommendations from our ML model
 @st.cache_data
 def load_predictions():
     base_url = "https://raw.githubusercontent.com/charleliebrun-afk/ML-BROMET-BRUN/87b14e8d13483b707fc94db41bc47da4f8469bf6/kaggle_data"
@@ -215,13 +215,15 @@ def load_predictions():
     except:
         return None
 
+
+# Hit the Google Books API to get cover, page count etc.
 @st.cache_data
 def get_google_books_info(isbn):
     if pd.isna(isbn) or isbn == "":
         return {}
     isbn = str(isbn).split(";")[0].strip().replace("-", "")
     try:
-        url = f"https://www.googleapis.com/books/v1/volumes?q=isbn:{isbn}&langRestrict=en"
+        url = f"https://www.googleapis.com/books/v1/volumes?q=isbn:{isbn}"
         r = requests.get(url, timeout=3).json()
         items_gb = r.get("items", [])
         if items_gb:
@@ -237,6 +239,8 @@ def get_google_books_info(isbn):
         pass
     return {}
 
+
+# Try OpenLibrary first / fall back to Google Books
 def get_cover_url(isbn):
     if pd.isna(isbn) or isbn == "":
         return None
@@ -251,6 +255,8 @@ def get_cover_url(isbn):
     info = get_google_books_info(isbn)
     return info.get("cover")
 
+
+# Use model predictions if available ohterwise use the most popular books 
 def get_recommendations(user_id, items_df, interactions_df, predictions_df):
     already_read = set(interactions_df[interactions_df["u"] == user_id]["i"].values)
     if predictions_df is not None:
@@ -258,7 +264,7 @@ def get_recommendations(user_id, items_df, interactions_df, predictions_df):
         if not row.empty:
             rec_ids = list(map(int, row.iloc[0]["recommendation"].split()))
             return rec_ids, already_read
-    # Fallback popularité
+    # fallback: most borrowed books the user hasn't read yet
     popular = (
         interactions_df[~interactions_df["i"].isin(already_read)]
         .groupby("i").size()
@@ -268,13 +274,15 @@ def get_recommendations(user_id, items_df, interactions_df, predictions_df):
     )
     return popular["i"].tolist(), already_read
 
-# ── Session state ─────────────────────────────────────────────────────────────
+
+# keep login state and user accounts alive across the session
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 if "username" not in st.session_state:
     st.session_state.username = ""
 if "users_db" not in st.session_state:
     st.session_state.users_db = {}
+
 
 # ── LOGIN PAGE ────────────────────────────────────────────────────────────────
 if not st.session_state.logged_in:
@@ -314,12 +322,13 @@ if not st.session_state.logged_in:
                 else:
                     st.error("Invalid username or password.")
 
+
 # ── MAIN APP ──────────────────────────────────────────────────────────────────
 else:
     interactions, items = load_data()
     predictions = load_predictions()
 
-    # Header
+    # header + sign out button side by side
     col_title, col_logout = st.columns([6, 1])
     with col_title:
         st.markdown("<h1>Library</h1>", unsafe_allow_html=True)
@@ -333,6 +342,7 @@ else:
 
     st.markdown('<hr class="divider">', unsafe_allow_html=True)
 
+    # User ID input
     st.markdown('<p style="font-size:0.85rem; color:#6a5a3a; margin-bottom:6px; letter-spacing:0.05em;">ENTER YOUR USER ID</p>', unsafe_allow_html=True)
     col1, col2 = st.columns([2, 1])
     with col1:
@@ -345,6 +355,7 @@ else:
     if search:
         recommended_ids, already_read = get_recommendations(user_id, items, interactions, predictions)
 
+        # Show what this user has already borrowed
         st.markdown('<p class="section-title">Reading history</p>', unsafe_allow_html=True)
         history = items[items["i"].isin(already_read)].head(8)
         if history.empty:
@@ -359,39 +370,49 @@ else:
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown('<p class="section-title">Recommended for you</p>', unsafe_allow_html=True)
 
+        # Preserve the model's ranking order
         rec_books = items[items["i"].isin(recommended_ids)]
         rec_books = rec_books.set_index("i").reindex(recommended_ids).reset_index()
 
+        # 5-column grid, 10 books total
         cols = st.columns(5)
         for i, (_, book) in enumerate(rec_books.head(10).iterrows()):
             with cols[i % 5]:
                 title = str(book.get("Title", "Unknown title")).rstrip("/").strip()
-                author = str(book.get("Author", "Unknown author")).rstrip("/").strip()
+
+                # Clean up author and hide it if empty or "nan"
+                author = str(book.get("Author", "")).rstrip("/").strip()
+                author = author if author and author != "nan" else ""
+
                 isbn = book.get("ISBN Valid", None)
 
                 cover_url = get_cover_url(isbn)
                 gb_info = get_google_books_info(isbn) if not pd.isna(str(isbn)) else {}
 
-                if cover_url:
-                    cover_html = f'<img src="{cover_url}" class="book-cover"/>'
-                else:
-                    cover_html = f'<div class="no-cover">{title[:40]}</div>'
+                cover_html = (
+                    f'<img src="{cover_url}" class="book-cover"/>'
+                    if cover_url
+                    else f'<div class="no-cover">{title[:40]}</div>'
+                )
 
+                # Page count and category and skip if nan
                 meta = ""
                 if gb_info.get("pages"):
                     meta += f'{gb_info["pages"]} pages'
-                if gb_info.get("categories"):
+                if gb_info.get("categories") and gb_info["categories"][0] != "nan":
                     meta += f' · {gb_info["categories"][0]}'
 
+                # Description 
                 desc = ""
                 if gb_info.get("description"):
                     desc = gb_info["description"][:110] + "..."
 
+                # Star rating from Google Books
                 stars = ""
                 if gb_info.get("rating"):
                     stars = "★" * int(gb_info["rating"]) + "☆" * (5 - int(gb_info["rating"]))
 
-                card_html = f"""
+                st.markdown(f"""
                 <div class="book-card">
                     {cover_html}
                     <div class="book-title">{title[:40]}</div>
@@ -400,5 +421,5 @@ else:
                     <div class="book-meta">{stars}</div>
                     <div class="book-description">{desc}</div>
                 </div>
-                """
-                st.markdown(card_html, unsafe_allow_html=True)
+                """, unsafe_allow_html=True)
+

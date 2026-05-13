@@ -343,19 +343,21 @@ else:
     st.markdown('<hr class="divider">', unsafe_allow_html=True)
 
     # User ID input
-    st.markdown('<p style="font-size:0.85rem; color:#6a5a3a; margin-bottom:6px; letter-spacing:0.05em;">ENTER YOUR USER ID</p>', unsafe_allow_html=True)
+    st.markdown('<p style="font-size:0.85rem; color:#6a5a3a; margin-bottom:6px; letter-spacing:0.05em;">ENTER YOUR USER ID</p>', unsafe_allow_html=True)    
     col1, col2 = st.columns([2, 1])
-    with col1:
-        user_id = st.number_input("", min_value=0,
-            max_value=int(interactions["u"].max()), value=42, step=1,
-            label_visibility="collapsed")
-    with col2:
-        search = st.button("Get recommendations")
+with col1:
+    user_id = st.number_input("", min_value=0,
+        max_value=int(interactions["u"].max()), value=42, step=1,
+        label_visibility="collapsed",
+        key="user_id_input")
+with col2:
+    search = st.button("Get recommendations")
 
-    if search:
-        recommended_ids, already_read = get_recommendations(user_id, items, interactions, predictions)
-
-        # Show what this user has already borrowed
+if search:
+    user_id = st.session_state["user_id_input"]
+    recommended_ids, already_read = get_recommendations(user_id, items, interactions, predictions)
+        
+    # Show what this user has already borrowed
         st.markdown('<p class="section-title">Reading history</p>', unsafe_allow_html=True)
         history = items[items["i"].isin(already_read)].head(8)
         if history.empty:

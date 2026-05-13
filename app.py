@@ -74,7 +74,7 @@ h1 {
     border: 1px solid #3a2e1e;
     border-radius: 10px;
     padding: 14px;
-    height: 500px;
+    height: 580px;
     display: flex;
     flex-direction: column;
     transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease;

@@ -205,7 +205,7 @@ def load_data():
 
 @st.cache_data
 def load_predictions():
-    base_url = "https://raw.githubusercontent.com/charleliebrun-afk/ML-BROMET-BRUN/main/kaggle_data"
+    base_url = "https://raw.githubusercontent.com/charleliebrun-afk/ML-BROMET-BRUN/main"
     try:
         preds = pd.read_csv(f"{base_url}/final_sub.csv")
         return preds
@@ -326,12 +326,6 @@ if not st.session_state.logged_in:
 else:
     interactions, items = load_data()
     predictions = load_predictions()
-
-    # DEBUG — à supprimer une fois que tout fonctionne
-    if predictions is None:
-        st.warning("⚠️ final_sub.csv non chargé depuis GitHub — fallback sur livres populaires")
-    else:
-        st.success(f"✅ Predictions chargées : {len(predictions)} utilisateurs. Colonnes items : {list(items.columns)}")
 
     col_title, col_logout = st.columns([6, 1])
     with col_title:

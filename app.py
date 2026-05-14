@@ -136,16 +136,14 @@ h1 {
 
 .reserved-badge {
     margin-top: 10px;
-    background: rgba(232, 213, 163, 0.1);
-    border: 1px solid #6a5030 !important;
+    background: rgba(232, 213, 163, 0.08);
+    border: 1px solid #6a5030;
     border-radius: 6px;
-    padding: 6px 10px;
+    padding: 7px 10px;
     font-size: 0.7rem;
     color: #c8a87a;
     text-align: center;
-    letter-spacing: 0.05em;
-    outline: none !important;
-    box-shadow: none !important;
+    letter-spacing: 0.06em;
 }
 
 .reservation-card {
@@ -165,11 +163,7 @@ h1 {
     color: #e8d5a3;
 }
 
-.reservation-info {
-    font-size: 0.7rem;
-    color: #6a5a3a;
-    margin-top: 2px;
-}
+.reservation-info { font-size: 0.7rem; color: #6a5a3a; margin-top: 2px; }
 
 .reservation-status {
     font-size: 0.68rem;
@@ -250,16 +244,10 @@ div[data-testid="stButton"] button {
 
 div[data-testid="stButton"] button:hover { background: #a07840 !important; }
 
-div[data-testid="stMarkdownContainer"] {
-    border: none !important;
-    outline: none !important;
-    box-shadow: none !important;
-}
-
-div[data-testid="stMarkdownContainer"] > div {
-    border: none !important;
-    box-shadow: none !important;
-}
+div[data-testid="stMarkdownContainer"] { border: none !important; outline: none !important; box-shadow: none !important; }
+div[data-testid="stMarkdownContainer"] > div { border: none !important; box-shadow: none !important; }
+div[data-testid="stElementContainer"] { border: none !important; outline: none !important; box-shadow: none !important; }
+div[data-testid="stVerticalBlock"] { border: none !important; outline: none !important; box-shadow: none !important; }
 
 .stRadio label { color: #9a8a6a !important; }
 .stRadio div { gap: 12px !important; }
@@ -530,6 +518,9 @@ else:
 
             is_reserved = title in already_reserved
 
+            # badge inclus directement dans la carte pour éviter les conteneurs Streamlit
+            badge_html = '<div class="reserved-badge">✓ Reserved — awaiting pick-up</div>' if is_reserved else ""
+
             st.markdown(f"""
             <div class="book-card">
                 {cover_html}
@@ -537,12 +528,11 @@ else:
                 <div class="book-author">{author[:40]}</div>
                 <div class="book-meta">{meta_str}</div>
                 <div class="book-description">{description}</div>
+                {badge_html}
             </div>
             """, unsafe_allow_html=True)
 
-            if is_reserved:
-                st.markdown('<div class="reserved-badge">✓ Reserved — awaiting pick-up</div>', unsafe_allow_html=True)
-            else:
+            if not is_reserved:
                 if st.button("Reserve in store", key=f"reserve_{idx}"):
                     st.session_state.reservations.append({
                         "title": title,

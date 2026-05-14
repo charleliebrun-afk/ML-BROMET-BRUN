@@ -252,7 +252,7 @@ def get_cover_url(isbn):
 
 
 def get_recommendations(user_id, items_df, interactions_df, predictions_df):
-    user_id = int(user_id)  # force int pour éviter les problèmes de type float vs int
+    user_id = int(user_id)
     already_read = set(interactions_df[interactions_df["u"] == user_id]["i"].values)
     if predictions_df is not None:
         row = predictions_df[predictions_df["user_id"] == user_id]
@@ -364,6 +364,40 @@ else:
         rec_books = rec_books.set_index("i").reindex(recommended_ids).reset_index()
 
         cols = st.columns(5)
-        for i, (_, book) in enumerate(rec_books.head(10).iterrows()):
-            with cols[i % 5]:
+        for idx, (_, book) in enumerate(rec_books.head(10).iterrows()):
+            with cols[idx % 5]:
                 title = str(book.get("Title", "Unknown title")).rstrip("/").strip()
+                author = str(book.get("Author", "")).strip()
+                year = book.get("Year", "")
+                isbn = book.get("ISBN", "")
+
+                cover_url = get_cover_url(isbn)
+                gb_info = get_google_books_info(isbn)
+                description = gb_info.get("description", "")[:180] + "…" if gb_info.get("description") else ""
+                rating = gb_info.get("rating")
+                pages = gb_info.get("pages")
+
+                cover_html = (
+                    f'<img class="book-cover" src="{cover_url}" alt="{title}">'
+                    if cover_url
+                    else f'<div class="no-cover">{title[:40]}</div>'
+                )
+
+                meta_parts = []
+                if year and str(year) != "nan":
+                    meta_parts.append(str(int(float(year))) if str(year).replace(".","").isdigit() else str(year))
+                if pages:
+                    meta_parts.append(f"{pages} pages")
+                if rating:
+                    meta_parts.append(f"★ {rating}")
+                meta_str = " · ".join(meta_parts)
+
+                st.markdown(f"""
+                <div class="book-card">
+                    {cover_html}
+                    <div class="book-title">{title[:60]}</div>
+                    <div class="book-author">{author[:40]}</div>
+                    <div class="book-meta">{meta_str}</div>
+                    <div class="book-description">{description}</div>
+                </div>
+                """, unsafe_allow_html=True)

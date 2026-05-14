@@ -4,6 +4,7 @@ import requests
 
 st.set_page_config(page_title="Library Recommender", page_icon="📖", layout="wide")
 
+# ---- design ----
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500&display=swap');
@@ -14,16 +15,14 @@ st.markdown("""
     background-image: url('https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=1600&q=80');
     background-size: cover;
     background-position: center;
-    background-attachment: fixed;
-}
+    background-attachment: fixed; }
 
 .stApp::before {
     content: '';
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(10, 6, 2, 0.82);
-    z-index: 0;
-}
+    z-index: 0; }
 
 .block-container { position: relative; z-index: 1; padding-top: 3rem; }
 
@@ -33,8 +32,7 @@ h1 {
     font-weight: 700 !important;
     color: #e8d5a3 !important;
     letter-spacing: -0.5px;
-    margin-bottom: 0 !important;
-}
+    margin-bottom: 0 !important; }
 
 .subtitle {
     color: #9a8a6a;
@@ -42,8 +40,7 @@ h1 {
     font-style: italic;
     margin-top: 6px;
     margin-bottom: 4px;
-    font-family: 'Playfair Display', serif;
-}
+    font-family: 'Playfair Display', serif; }
 
 .stat { color: #6a5a3a; font-size: 0.78rem; margin-bottom: 28px; letter-spacing: 0.05em; }
 
@@ -55,8 +52,7 @@ h1 {
     letter-spacing: 0.15em;
     text-transform: uppercase;
     color: #6a5a3a;
-    margin-bottom: 14px;
-}
+    margin-bottom: 14px; }
 
 .history-tag {
     display: inline-block;
@@ -66,8 +62,7 @@ h1 {
     padding: 4px 12px;
     border-radius: 20px;
     font-size: 0.75rem;
-    margin: 3px;
-}
+    margin: 3px; }
 
 .book-card {
     background: rgba(20, 14, 6, 0.85);
@@ -78,22 +73,19 @@ h1 {
     display: flex;
     flex-direction: column;
     transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
-    backdrop-filter: blur(8px);
-}
+    backdrop-filter: blur(8px); }
 
 .book-card:hover {
     box-shadow: 0 12px 40px rgba(232, 213, 163, 0.12);
     transform: translateY(-4px);
-    border-color: #6a5030;
-}
+    border-color: #6a5030; }
 
 .book-cover {
     width: 100%;
     height: 200px;
     object-fit: cover;
     border-radius: 6px;
-    margin-bottom: 12px;
-}
+    margin-bottom: 12px; }
 
 .no-cover {
     height: 200px;
@@ -109,19 +101,18 @@ h1 {
     padding: 10px;
     margin-bottom: 12px;
     font-family: 'Playfair Display', serif;
-    font-style: italic;
-}
+    font-style: italic; }
 
 .book-title {
     font-size: 0.82rem;
     font-weight: 600;
     color: #e8d5a3;
     line-height: 1.3;
-    font-family: 'Playfair Display', serif;
-}
+    font-family: 'Playfair Display', serif; }
 
 .book-author { font-size: 0.73rem; color: #7a6a4a; margin-top: 4px; }
 .book-meta { font-size: 0.7rem; color: #5a4a2a; margin-top: 3px; }
+
 .book-description {
     font-size: 0.71rem;
     color: #8a7a5a;
@@ -131,8 +122,7 @@ h1 {
     overflow: hidden;
     display: -webkit-box;
     -webkit-line-clamp: 4;
-    -webkit-box-orient: vertical;
-}
+    -webkit-box-orient: vertical; }
 
 .reserved-badge {
     margin-top: 10px;
@@ -143,8 +133,7 @@ h1 {
     font-size: 0.7rem;
     color: #c8a87a;
     text-align: center;
-    letter-spacing: 0.06em;
-}
+    letter-spacing: 0.06em; }
 
 .reservation-card {
     background: rgba(20, 14, 6, 0.85);
@@ -154,14 +143,12 @@ h1 {
     margin-bottom: 8px;
     display: flex;
     justify-content: space-between;
-    align-items: center;
-}
+    align-items: center; }
 
 .reservation-title {
     font-family: 'Playfair Display', serif;
     font-size: 0.82rem;
-    color: #e8d5a3;
-}
+    color: #e8d5a3; }
 
 .reservation-info { font-size: 0.7rem; color: #6a5a3a; margin-top: 2px; }
 
@@ -171,8 +158,7 @@ h1 {
     border: 1px solid #6a5030;
     border-radius: 20px;
     padding: 3px 10px;
-    white-space: nowrap;
-}
+    white-space: nowrap; }
 
 .login-container {
     max-width: 440px;
@@ -182,52 +168,45 @@ h1 {
     border-radius: 16px;
     padding: 48px 40px;
     backdrop-filter: blur(12px);
-    text-align: center;
-}
+    text-align: center; }
 
 .login-title {
     font-family: 'Playfair Display', serif;
     font-size: 2rem;
     color: #e8d5a3;
-    margin-bottom: 6px;
-}
+    margin-bottom: 6px; }
 
 .login-subtitle {
     color: #6a5a3a;
     font-size: 0.85rem;
     font-style: italic;
     margin-bottom: 32px;
-    font-family: 'Playfair Display', serif;
-}
+    font-family: 'Playfair Display', serif; }
 
 div[data-testid="stTextInput"] input {
     background: rgba(232, 213, 163, 0.06) !important;
     border: 1px solid #3a2e1e !important;
     border-radius: 8px !important;
     color: #e8d5a3 !important;
-    padding: 12px 16px !important;
-}
+    padding: 12px 16px !important; }
 
 div[data-testid="stTextInput"] label {
     color: #7a6a4a !important;
     font-size: 0.78rem !important;
     letter-spacing: 0.08em !important;
-    text-transform: uppercase !important;
-}
+    text-transform: uppercase !important; }
 
 div[data-testid="stNumberInput"] input {
     background: rgba(232, 213, 163, 0.06) !important;
     border: 1px solid #3a2e1e !important;
     color: #e8d5a3 !important;
-    border-radius: 8px !important;
-}
+    border-radius: 8px !important; }
 
 div[data-testid="stNumberInput"] label {
     color: #7a6a4a !important;
     font-size: 0.78rem !important;
     letter-spacing: 0.08em !important;
-    text-transform: uppercase !important;
-}
+    text-transform: uppercase !important; }
 
 div[data-testid="stButton"] button {
     background: #8a6a30 !important;
@@ -239,8 +218,7 @@ div[data-testid="stButton"] button {
     font-weight: 500 !important;
     letter-spacing: 0.05em !important;
     transition: background 0.2s !important;
-    width: 100% !important;
-}
+    width: 100% !important; }
 
 div[data-testid="stButton"] button:hover { background: #a07840 !important; }
 
@@ -256,13 +234,15 @@ div[data-testid="stVerticalBlock"] { border: none !important; outline: none !imp
 """, unsafe_allow_html=True)
 
 
+# ---- DATA lOADING ----
+
+# cached so we don't reload on every interaction
 @st.cache_data
 def load_data():
     base_url = "https://raw.githubusercontent.com/charleliebrun-afk/ML-BROMET-BRUN/main/kaggle_data"
     interactions = pd.read_csv(f"{base_url}/interactions_train.csv")
     items = pd.read_csv(f"{base_url}/items.csv")
     return interactions, items
-
 
 @st.cache_data
 def load_predictions():
@@ -273,56 +253,52 @@ def load_predictions():
         return None
 
 
+# ---- GOOGLE BOOKS ----
+
 @st.cache_data
 def get_google_books_info(isbn=None, title=None, author=None):
     try:
+        # try by ISBN first
         if isbn and not pd.isna(isbn) and isbn != "":
             isbn_clean = str(isbn).split(";")[0].strip().replace("-", "")
-            url = f"https://www.googleapis.com/books/v1/volumes?q=isbn:{isbn_clean}"
-            r = requests.get(url, timeout=3).json()
-            items_gb = r.get("items", [])
-            if items_gb:
-                info = items_gb[0]["volumeInfo"]
+            r = requests.get(f"https://www.googleapis.com/books/v1/volumes?q=isbn:{isbn_clean}", timeout=3).json()
+            if r.get("items"):
+                info = r["items"][0]["volumeInfo"]
                 return {
                     "cover": info.get("imageLinks", {}).get("thumbnail"),
                     "description": info.get("description", ""),
                     "pages": info.get("pageCount"),
-                    "rating": info.get("averageRating"),
-                }
+                    "rating": info.get("averageRating")}
+        # fall back to title + author search if ISBN didn't work
         if title:
             query = f"intitle:{title}"
-            if author and str(author) != "nan":
+            if author and author != "nan":
                 query += f"+inauthor:{author}"
-            url = f"https://www.googleapis.com/books/v1/volumes?q={requests.utils.quote(query)}&maxResults=1"
-            r = requests.get(url, timeout=3).json()
-            items_gb = r.get("items", [])
-            if items_gb:
-                info = items_gb[0]["volumeInfo"]
+            r = requests.get(f"https://www.googleapis.com/books/v1/volumes?q={requests.utils.quote(query)}&maxResults=1", timeout=3).json()
+            if r.get("items"):
+                info = r["items"][0]["volumeInfo"]
                 return {
                     "cover": info.get("imageLinks", {}).get("thumbnail"),
                     "description": info.get("description", ""),
                     "pages": info.get("pageCount"),
-                    "rating": info.get("averageRating"),
-                }
+                    "rating": info.get("averageRating")}
     except:
         pass
     return {}
-
 
 @st.cache_data
 def get_cover_url(isbn=None, title=None, author=None):
     if isbn and not pd.isna(isbn) and isbn != "":
         isbn_clean = str(isbn).split(";")[0].strip().replace("-", "")
         try:
-            url = f"https://covers.openlibrary.org/b/isbn/{isbn_clean}-M.jpg?default=false"
-            r = requests.get(url, timeout=3)
+            r = requests.get(f"https://covers.openlibrary.org/b/isbn/{isbn_clean}-M.jpg?default=false", timeout=3)
             if r.status_code == 200:
-                return url
+                return r.url
         except:
             pass
+    # OpenLibrary didn't have it, try Google Books
     info = get_google_books_info(isbn=isbn, title=title, author=author)
     return info.get("cover")
-
 
 def get_isbn(book, items_df):
     for col in items_df.columns:
@@ -332,13 +308,12 @@ def get_isbn(book, items_df):
                 return val
     return ""
 
-
 def clean(val):
+    # no "nan"
     if val is None:
         return ""
     s = str(val).strip()
     return "" if s == "nan" else s
-
 
 def get_recommendations(user_id, items_df, interactions_df, predictions_df):
     user_id = int(user_id)
@@ -348,29 +323,20 @@ def get_recommendations(user_id, items_df, interactions_df, predictions_df):
         if not row.empty:
             rec_ids = list(map(int, row.iloc[0]["recommendation"].split()))
             return rec_ids, already_read
-    popular = (
-        interactions_df[~interactions_df["i"].isin(already_read)]
-        .groupby("i").size()
-        .reset_index(name="count")
-        .sort_values("count", ascending=False)
-        .head(10)
-    )
+    # no prediction found for this user, fall back to most popular books
+    popular = interactions_df[~interactions_df["i"].isin(already_read)].groupby("i").size().reset_index(name="count").sort_values("count", ascending=False).head(10)
     return popular["i"].tolist(), already_read
 
 
-for key, val in {
-    "logged_in": False,
-    "username": "",
-    "user_id": None,
-    "users_db": {},
-    "reservations": [],
-    "show_reservations": False,
-}.items():
+# session state
+
+for key, val in {"logged_in": False, "username": "", "user_id": None, "users_db": {}, "reservations": [], "show_reservations": False}.items():
     if key not in st.session_state:
         st.session_state[key] = val
 
 
-# ── LOGIN ─────────────────────────────────────────────────────────────────────
+# ---- login page ----
+
 if not st.session_state.logged_in:
     st.markdown("""
     <div class="login-container">
@@ -399,10 +365,7 @@ if not st.session_state.logged_in:
                 elif new_username in st.session_state.users_db:
                     st.error("This username is already taken.")
                 else:
-                    st.session_state.users_db[new_username] = {
-                        "password": new_password,
-                        "user_id": int(new_uid),
-                    }
+                    st.session_state.users_db[new_username] = {"password": new_password, "user_id": int(new_uid)}
                     st.session_state.logged_in = True
                     st.session_state.username = new_username
                     st.session_state.user_id = int(new_uid)
@@ -422,12 +385,14 @@ if not st.session_state.logged_in:
                     st.error("Incorrect username or password.")
 
 
-# ── MAIN APP ──────────────────────────────────────────────────────────────────
+# ---- MAIN page ----
+
 else:
     interactions, items = load_data()
     predictions = load_predictions()
     user_id = st.session_state.user_id
 
+    # header with title, reservations button and sign out
     col_title, col_res, col_logout = st.columns([5, 1.5, 1])
     with col_title:
         st.markdown("<h1>Library</h1>", unsafe_allow_html=True)
@@ -447,6 +412,7 @@ else:
             st.session_state.show_reservations = False
             st.rerun()
 
+    # reservations panel, shown/hidden by the button above
     if st.session_state.show_reservations:
         st.markdown('<hr class="divider">', unsafe_allow_html=True)
         st.markdown('<p class="section-title">My reservations</p>', unsafe_allow_html=True)
@@ -468,23 +434,21 @@ else:
 
     recommended_ids, already_read = get_recommendations(user_id, items, interactions, predictions)
 
+    # show the last 8 books this user has borrowed
     st.markdown('<p class="section-title">Reading history</p>', unsafe_allow_html=True)
     history = items[items["i"].isin(already_read)].head(8)
     if history.empty:
         st.markdown('<p style="color:#4a3a20;font-size:0.85rem;font-style:italic;">No history found for this reader.</p>', unsafe_allow_html=True)
     else:
-        tags_html = "".join([
-            f'<span class="history-tag">{clean(row["Title"])[:35]}</span>'
-            for _, row in history.iterrows()
-        ])
+        tags_html = "".join([f'<span class="history-tag">{clean(row["Title"])[:35]}</span>' for _, row in history.iterrows()])
         st.markdown(tags_html, unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown('<p class="section-title">Recommended for you</p>', unsafe_allow_html=True)
 
+    # keep the model's ranking order
     rec_books = items[items["i"].isin(recommended_ids)].copy()
     rec_books = rec_books.set_index("i").reindex(recommended_ids).reset_index()
-
     already_reserved = {r["title"] for r in st.session_state.reservations}
 
     cols = st.columns(5)
@@ -501,11 +465,10 @@ else:
             rating = gb_info.get("rating")
             pages = gb_info.get("pages")
 
-            cover_html = (
-                f'<img class="book-cover" src="{cover_url}" alt="">'
-                if cover_url
-                else f'<div class="no-cover">{title[:40]}</div>'
-            )
+            if cover_url:
+                cover_html = f'<img class="book-cover" src="{cover_url}" alt="">'
+            else:
+                cover_html = f'<div class="no-cover">{title[:40]}</div>'
 
             meta_parts = []
             if year:
@@ -517,8 +480,7 @@ else:
             meta_str = " · ".join(meta_parts)
 
             is_reserved = title in already_reserved
-
-            # badge inclus directement dans la carte pour éviter les conteneurs Streamlit
+            # badge inside the card HTML to avoid Streamlit adding its own borders around it
             badge_html = '<div class="reserved-badge">✓ Reserved — awaiting pick-up</div>' if is_reserved else ""
 
             st.markdown(f"""
@@ -534,9 +496,5 @@ else:
 
             if not is_reserved:
                 if st.button("Reserve in store", key=f"reserve_{idx}"):
-                    st.session_state.reservations.append({
-                        "title": title,
-                        "author": author,
-                        "isbn": isbn,
-                    })
+                    st.session_state.reservations.append({"title": title, "author": author, "isbn": isbn})
                     st.rerun()

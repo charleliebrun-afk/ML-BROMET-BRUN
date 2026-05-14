@@ -74,11 +74,10 @@ h1 {
     border: 1px solid #3a2e1e;
     border-radius: 10px;
     padding: 14px;
-    height: 620px;
+    height: 660px;
     display: flex;
     flex-direction: column;
     transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
-    cursor: pointer;
     backdrop-filter: blur(8px);
 }
 
@@ -131,13 +130,57 @@ h1 {
     flex-grow: 1;
     overflow: hidden;
     display: -webkit-box;
-    -webkit-line-clamp: 5;
+    -webkit-line-clamp: 4;
     -webkit-box-orient: vertical;
 }
 
+.reserved-badge {
+    margin-top: 10px;
+    background: rgba(232, 213, 163, 0.1);
+    border: 1px solid #6a5030;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 0.7rem;
+    color: #c8a87a;
+    text-align: center;
+    letter-spacing: 0.05em;
+}
+
+.reservation-card {
+    background: rgba(20, 14, 6, 0.85);
+    border: 1px solid #3a2e1e;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.reservation-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.82rem;
+    color: #e8d5a3;
+}
+
+.reservation-info {
+    font-size: 0.7rem;
+    color: #6a5a3a;
+    margin-top: 2px;
+}
+
+.reservation-status {
+    font-size: 0.68rem;
+    color: #c8a87a;
+    border: 1px solid #6a5030;
+    border-radius: 20px;
+    padding: 3px 10px;
+    white-space: nowrap;
+}
+
 .login-container {
-    max-width: 420px;
-    margin: 80px auto;
+    max-width: 440px;
+    margin: 60px auto;
     background: rgba(15, 10, 4, 0.92);
     border: 1px solid #3a2e1e;
     border-radius: 16px;
@@ -176,6 +219,20 @@ div[data-testid="stTextInput"] label {
     text-transform: uppercase !important;
 }
 
+div[data-testid="stNumberInput"] input {
+    background: rgba(232, 213, 163, 0.06) !important;
+    border: 1px solid #3a2e1e !important;
+    color: #e8d5a3 !important;
+    border-radius: 8px !important;
+}
+
+div[data-testid="stNumberInput"] label {
+    color: #7a6a4a !important;
+    font-size: 0.78rem !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+}
+
 div[data-testid="stButton"] button {
     background: #8a6a30 !important;
     color: #f5e8c0 !important;
@@ -190,13 +247,6 @@ div[data-testid="stButton"] button {
 }
 
 div[data-testid="stButton"] button:hover { background: #a07840 !important; }
-
-div[data-testid="stNumberInput"] input {
-    background: rgba(232, 213, 163, 0.06) !important;
-    border: 1px solid #3a2e1e !important;
-    color: #e8d5a3 !important;
-    border-radius: 8px !important;
-}
 
 .stRadio label { color: #9a8a6a !important; }
 .stRadio div { gap: 12px !important; }
@@ -217,8 +267,7 @@ def load_data():
 def load_predictions():
     base_url = "https://raw.githubusercontent.com/charleliebrun-afk/ML-BROMET-BRUN/main"
     try:
-        preds = pd.read_csv(f"{base_url}/final_sub.csv")
-        return preds
+        return pd.read_csv(f"{base_url}/final_sub.csv")
     except:
         return None
 
@@ -308,14 +357,20 @@ def get_recommendations(user_id, items_df, interactions_df, predictions_df):
     return popular["i"].tolist(), already_read
 
 
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-if "username" not in st.session_state:
-    st.session_state.username = ""
-if "users_db" not in st.session_state:
-    st.session_state.users_db = {}
+# session state init
+for key, val in {
+    "logged_in": False,
+    "username": "",
+    "user_id": None,
+    "users_db": {},
+    "reservations": [],
+    "show_reservations": False,
+}.items():
+    if key not in st.session_state:
+        st.session_state[key] = val
 
 
+# ── LOGIN PAGE ────────────────────────────────────────────────────────────────
 if not st.session_state.logged_in:
     st.markdown("""
     <div class="login-container">
@@ -326,116 +381,163 @@ if not st.session_state.logged_in:
 
     col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
-        mode = st.radio("", ["Sign in", "Register"], horizontal=True, label_visibility="collapsed")
-        st.markdown("<br>", unsafe_allow_html=True)
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
+        mode = st.radio("", ["Sign in", "Create account"], horizontal=True, label_visibility="collapsed")
         st.markdown("<br>", unsafe_allow_html=True)
 
-        if mode == "Register":
-            if st.button("Create account"):
-                if username and password:
-                    if username in st.session_state.users_db:
-                        st.error("Username already exists.")
-                    else:
-                        st.session_state.users_db[username] = password
-                        st.session_state.logged_in = True
-                        st.session_state.username = username
-                        st.rerun()
+        if mode == "Create account":
+            new_username = st.text_input("Username")
+            new_password = st.text_input("Password", type="password")
+            new_password2 = st.text_input("Confirm password", type="password")
+            new_uid = st.number_input("Library card number", min_value=0, step=1,
+                                      help="Your library card number links your account to your reading history.")
+            st.markdown("<br>", unsafe_allow_html=True)
+            if st.button("Create my account"):
+                if not new_username or not new_password:
+                    st.error("Please fill in all fields.")
+                elif new_password != new_password2:
+                    st.error("Passwords do not match.")
+                elif new_username in st.session_state.users_db:
+                    st.error("This username is already taken.")
                 else:
-                    st.warning("Please fill in all fields.")
+                    st.session_state.users_db[new_username] = {
+                        "password": new_password,
+                        "user_id": int(new_uid),
+                    }
+                    st.session_state.logged_in = True
+                    st.session_state.username = new_username
+                    st.session_state.user_id = int(new_uid)
+                    st.rerun()
         else:
+            username = st.text_input("Username")
+            password = st.text_input("Password", type="password")
+            st.markdown("<br>", unsafe_allow_html=True)
             if st.button("Sign in"):
-                if username in st.session_state.users_db and st.session_state.users_db[username] == password:
+                user = st.session_state.users_db.get(username)
+                if user and user["password"] == password:
                     st.session_state.logged_in = True
                     st.session_state.username = username
+                    st.session_state.user_id = user["user_id"]
                     st.rerun()
                 else:
-                    st.error("Invalid username or password.")
+                    st.error("Incorrect username or password.")
 
+
+# ── MAIN APP ──────────────────────────────────────────────────────────────────
 else:
     interactions, items = load_data()
     predictions = load_predictions()
+    user_id = st.session_state.user_id
 
-    col_title, col_logout = st.columns([6, 1])
+    # header
+    col_title, col_res, col_logout = st.columns([5, 1.5, 1])
     with col_title:
         st.markdown("<h1>Library</h1>", unsafe_allow_html=True)
         st.markdown('<p class="subtitle">Your personal reading companion</p>', unsafe_allow_html=True)
-        st.markdown(f'<p class="stat">A collection of {len(items):,} books · {len(interactions):,} reading records</p>', unsafe_allow_html=True)
+        st.markdown(f'<p class="stat">Welcome, {st.session_state.username} · Card #{user_id}</p>', unsafe_allow_html=True)
+    with col_res:
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        res_count = len(st.session_state.reservations)
+        label = f"My reservations ({res_count})" if res_count else "My reservations"
+        if st.button(label):
+            st.session_state.show_reservations = not st.session_state.show_reservations
     with col_logout:
         st.markdown("<br><br>", unsafe_allow_html=True)
         if st.button("Sign out"):
             st.session_state.logged_in = False
+            st.session_state.reservations = []
+            st.session_state.show_reservations = False
             st.rerun()
+
+    # reservations panel
+    if st.session_state.show_reservations:
+        st.markdown('<hr class="divider">', unsafe_allow_html=True)
+        st.markdown('<p class="section-title">My reservations</p>', unsafe_allow_html=True)
+        if not st.session_state.reservations:
+            st.markdown('<p style="color:#4a3a20;font-size:0.85rem;font-style:italic;">No reservations yet.</p>', unsafe_allow_html=True)
+        else:
+            for r in st.session_state.reservations:
+                st.markdown(f"""
+                <div class="reservation-card">
+                    <div>
+                        <div class="reservation-title">{r['title']}</div>
+                        <div class="reservation-info">{r['author']} · Reserved for pick-up within 7 days</div>
+                    </div>
+                    <div class="reservation-status">⏳ Awaiting pick-up</div>
+                </div>
+                """, unsafe_allow_html=True)
 
     st.markdown('<hr class="divider">', unsafe_allow_html=True)
 
-    st.markdown('<p style="font-size:0.85rem; color:#6a5a3a; margin-bottom:6px; letter-spacing:0.05em;">ENTER YOUR USER ID</p>', unsafe_allow_html=True)
-    col1, col2 = st.columns([2, 1])
-    with col1:
-        user_id = st.number_input("", min_value=0,
-            max_value=int(interactions["u"].max()), value=42, step=1,
-            label_visibility="collapsed",
-            key="user_id_input")
-    with col2:
-        search = st.button("Get recommendations")
+    # recommendations
+    recommended_ids, already_read = get_recommendations(user_id, items, interactions, predictions)
 
-    if search:
-        user_id = st.session_state["user_id_input"]
-        recommended_ids, already_read = get_recommendations(user_id, items, interactions, predictions)
+    st.markdown('<p class="section-title">Reading history</p>', unsafe_allow_html=True)
+    history = items[items["i"].isin(already_read)].head(8)
+    if history.empty:
+        st.markdown('<p style="color:#4a3a20;font-size:0.85rem;font-style:italic;">No history found for this reader.</p>', unsafe_allow_html=True)
+    else:
+        tags_html = "".join([
+            f'<span class="history-tag">{clean(row["Title"])[:35]}</span>'
+            for _, row in history.iterrows()
+        ])
+        st.markdown(tags_html, unsafe_allow_html=True)
 
-        st.markdown('<p class="section-title">Reading history</p>', unsafe_allow_html=True)
-        history = items[items["i"].isin(already_read)].head(8)
-        if history.empty:
-            st.markdown('<p style="color:#4a3a20;font-size:0.85rem;font-style:italic;">No history found for this reader.</p>', unsafe_allow_html=True)
-        else:
-            tags_html = "".join([
-                f'<span class="history-tag">{clean(row["Title"])[:35]}</span>'
-                for _, row in history.iterrows()
-            ])
-            st.markdown(tags_html, unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown('<p class="section-title">Recommended for you</p>', unsafe_allow_html=True)
 
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown('<p class="section-title">Recommended for you</p>', unsafe_allow_html=True)
+    rec_books = items[items["i"].isin(recommended_ids)].copy()
+    rec_books = rec_books.set_index("i").reindex(recommended_ids).reset_index()
 
-        rec_books = items[items["i"].isin(recommended_ids)].copy()
-        rec_books = rec_books.set_index("i").reindex(recommended_ids).reset_index()
+    already_reserved = {r["title"] for r in st.session_state.reservations}
 
-        cols = st.columns(5)
-        for idx, (_, book) in enumerate(rec_books.head(10).iterrows()):
-            with cols[idx % 5]:
-                title = clean(book.get("Title", "Unknown title")) or "Unknown title"
-                author = clean(book.get("Author", ""))
-                year = clean(book.get("Year", ""))
-                isbn = get_isbn(book, items)
+    cols = st.columns(5)
+    for idx, (_, book) in enumerate(rec_books.head(10).iterrows()):
+        with cols[idx % 5]:
+            title = clean(book.get("Title", "Unknown title")) or "Unknown title"
+            author = clean(book.get("Author", ""))
+            year = clean(book.get("Year", ""))
+            isbn = get_isbn(book, items)
 
-                cover_url = get_cover_url(isbn=isbn, title=title, author=author)
-                gb_info = get_google_books_info(isbn=isbn, title=title, author=author)
-                description = clean(gb_info.get("description", ""))
-                rating = gb_info.get("rating")
-                pages = gb_info.get("pages")
+            cover_url = get_cover_url(isbn=isbn, title=title, author=author)
+            gb_info = get_google_books_info(isbn=isbn, title=title, author=author)
+            description = clean(gb_info.get("description", ""))
+            rating = gb_info.get("rating")
+            pages = gb_info.get("pages")
 
-                cover_html = (
-                    f'<img class="book-cover" src="{cover_url}" alt="">'
-                    if cover_url
-                    else f'<div class="no-cover">{title[:40]}</div>'
-                )
+            cover_html = (
+                f'<img class="book-cover" src="{cover_url}" alt="">'
+                if cover_url
+                else f'<div class="no-cover">{title[:40]}</div>'
+            )
 
-                meta_parts = []
-                if year:
-                    meta_parts.append(str(int(float(year))) if year.replace(".", "").isdigit() else year)
-                if pages:
-                    meta_parts.append(f"{pages} pages")
-                if rating:
-                    meta_parts.append(f"★ {rating}")
-                meta_str = " · ".join(meta_parts)
+            meta_parts = []
+            if year:
+                meta_parts.append(str(int(float(year))) if year.replace(".", "").isdigit() else year)
+            if pages:
+                meta_parts.append(f"{pages} pages")
+            if rating:
+                meta_parts.append(f"★ {rating}")
+            meta_str = " · ".join(meta_parts)
 
-                st.markdown(f"""
-                <div class="book-card">
-                    {cover_html}
-                    <div class="book-title">{title[:60]}</div>
-                    <div class="book-author">{author[:40]}</div>
-                    <div class="book-meta">{meta_str}</div>
-                    <div class="book-description">{description}</div>
-                </div>
-                """, unsafe_allow_html=True)
+            is_reserved = title in already_reserved
+
+            st.markdown(f"""
+            <div class="book-card">
+                {cover_html}
+                <div class="book-title">{title[:60]}</div>
+                <div class="book-author">{author[:40]}</div>
+                <div class="book-meta">{meta_str}</div>
+                <div class="book-description">{description}</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            if is_reserved:
+                st.markdown('<div class="reserved-badge">✓ Reserved — awaiting pick-up</div>', unsafe_allow_html=True)
+            else:
+                if st.button("Reserve in store", key=f"reserve_{idx}"):
+                    st.session_state.reservations.append({
+                        "title": title,
+                        "author": author,
+                        "isbn": isbn,
+                    })
+                    st.rerun()

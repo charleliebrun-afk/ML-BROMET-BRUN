@@ -239,7 +239,6 @@ def get_google_books_info(isbn=None, title=None, author=None):
                     "pages": info.get("pageCount"),
                     "rating": info.get("averageRating"),
                 }
-        # fallback: search by title + author
         if title:
             query = f"intitle:{title}"
             if author and str(author) != "nan":
@@ -282,6 +281,13 @@ def get_isbn(book, items_df):
             if val and str(val) != "nan":
                 return val
     return ""
+
+
+def clean(val):
+    if val is None:
+        return ""
+    s = str(val).strip()
+    return "" if s == "nan" else s
 
 
 def get_recommendations(user_id, items_df, interactions_df, predictions_df):
@@ -384,7 +390,7 @@ else:
             st.markdown('<p style="color:#4a3a20;font-size:0.85rem;font-style:italic;">No history found for this reader.</p>', unsafe_allow_html=True)
         else:
             tags_html = "".join([
-                f'<span class="history-tag">{str(row["Title"]).rstrip("/").strip()[:35]}</span>'
+                f'<span class="history-tag">{clean(row["Title"])[:35]}</span>'
                 for _, row in history.iterrows()
             ])
             st.markdown(tags_html, unsafe_allow_html=True)
@@ -398,14 +404,14 @@ else:
         cols = st.columns(5)
         for idx, (_, book) in enumerate(rec_books.head(10).iterrows()):
             with cols[idx % 5]:
-                title = str(book.get("Title", "Unknown title")).rstrip("/").strip()
-                author = str(book.get("Author", "")).strip()
-                year = book.get("Year", "")
+                title = clean(book.get("Title", "Unknown title")) or "Unknown title"
+                author = clean(book.get("Author", ""))
+                year = clean(book.get("Year", ""))
                 isbn = get_isbn(book, items)
 
                 cover_url = get_cover_url(isbn=isbn, title=title, author=author)
                 gb_info = get_google_books_info(isbn=isbn, title=title, author=author)
-                description = gb_info.get("description", "")
+                description = clean(gb_info.get("description", ""))
                 rating = gb_info.get("rating")
                 pages = gb_info.get("pages")
 
@@ -416,8 +422,8 @@ else:
                 )
 
                 meta_parts = []
-                if year and str(year) != "nan":
-                    meta_parts.append(str(int(float(str(year)))) if str(year).replace(".", "").isdigit() else str(year))
+                if year:
+                    meta_parts.append(str(int(float(year))) if year.replace(".", "").isdigit() else year)
                 if pages:
                     meta_parts.append(f"{pages} pages")
                 if rating:

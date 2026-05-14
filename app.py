@@ -74,7 +74,7 @@ h1 {
     border: 1px solid #3a2e1e;
     border-radius: 10px;
     padding: 14px;
-    height: 580px;
+    height: 620px;
     display: flex;
     flex-direction: column;
     transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
@@ -90,14 +90,14 @@ h1 {
 
 .book-cover {
     width: 100%;
-    height: 190px;
+    height: 200px;
     object-fit: cover;
     border-radius: 6px;
     margin-bottom: 12px;
 }
 
 .no-cover {
-    height: 190px;
+    height: 200px;
     background: rgba(232, 213, 163, 0.04);
     border: 1px solid #2a1e0e;
     border-radius: 6px;
@@ -123,7 +123,17 @@ h1 {
 
 .book-author { font-size: 0.73rem; color: #7a6a4a; margin-top: 4px; }
 .book-meta { font-size: 0.7rem; color: #5a4a2a; margin-top: 3px; }
-.book-description { font-size: 0.71rem; color: #7a6a4a; line-height: 1.5; margin-top: 6px; flex-grow: 1; overflow: hidden; }
+.book-description {
+    font-size: 0.71rem;
+    color: #8a7a5a;
+    line-height: 1.55;
+    margin-top: 8px;
+    flex-grow: 1;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 5;
+    -webkit-box-orient: vertical;
+}
 
 .login-container {
     max-width: 420px;
@@ -214,40 +224,54 @@ def load_predictions():
 
 
 @st.cache_data
-def get_google_books_info(isbn):
-    if pd.isna(isbn) or isbn == "":
-        return {}
-    isbn = str(isbn).split(";")[0].strip().replace("-", "")
+def get_google_books_info(isbn=None, title=None, author=None):
     try:
-        url = f"https://www.googleapis.com/books/v1/volumes?q=isbn:{isbn}"
-        r = requests.get(url, timeout=3).json()
-        items_gb = r.get("items", [])
-        if items_gb:
-            info = items_gb[0]["volumeInfo"]
-            return {
-                "cover": info.get("imageLinks", {}).get("thumbnail"),
-                "description": info.get("description", ""),
-                "pages": info.get("pageCount"),
-                "categories": info.get("categories", []),
-                "rating": info.get("averageRating"),
-            }
+        if isbn and not pd.isna(isbn) and isbn != "":
+            isbn_clean = str(isbn).split(";")[0].strip().replace("-", "")
+            url = f"https://www.googleapis.com/books/v1/volumes?q=isbn:{isbn_clean}"
+            r = requests.get(url, timeout=3).json()
+            items_gb = r.get("items", [])
+            if items_gb:
+                info = items_gb[0]["volumeInfo"]
+                return {
+                    "cover": info.get("imageLinks", {}).get("thumbnail"),
+                    "description": info.get("description", ""),
+                    "pages": info.get("pageCount"),
+                    "rating": info.get("averageRating"),
+                }
+        # fallback: search by title + author
+        if title:
+            query = f"intitle:{title}"
+            if author and str(author) != "nan":
+                query += f"+inauthor:{author}"
+            url = f"https://www.googleapis.com/books/v1/volumes?q={requests.utils.quote(query)}&maxResults=1"
+            r = requests.get(url, timeout=3).json()
+            items_gb = r.get("items", [])
+            if items_gb:
+                info = items_gb[0]["volumeInfo"]
+                return {
+                    "cover": info.get("imageLinks", {}).get("thumbnail"),
+                    "description": info.get("description", ""),
+                    "pages": info.get("pageCount"),
+                    "rating": info.get("averageRating"),
+                }
     except:
         pass
     return {}
 
 
-def get_cover_url(isbn):
-    if pd.isna(isbn) or isbn == "":
-        return None
-    isbn = str(isbn).split(";")[0].strip().replace("-", "")
-    try:
-        url = f"https://covers.openlibrary.org/b/isbn/{isbn}-M.jpg?default=false"
-        r = requests.get(url, timeout=3)
-        if r.status_code == 200:
-            return url
-    except:
-        pass
-    info = get_google_books_info(isbn)
+@st.cache_data
+def get_cover_url(isbn=None, title=None, author=None):
+    if isbn and not pd.isna(isbn) and isbn != "":
+        isbn_clean = str(isbn).split(";")[0].strip().replace("-", "")
+        try:
+            url = f"https://covers.openlibrary.org/b/isbn/{isbn_clean}-M.jpg?default=false"
+            r = requests.get(url, timeout=3)
+            if r.status_code == 200:
+                return url
+        except:
+            pass
+    info = get_google_books_info(isbn=isbn, title=title, author=author)
     return info.get("cover")
 
 
@@ -379,9 +403,9 @@ else:
                 year = book.get("Year", "")
                 isbn = get_isbn(book, items)
 
-                cover_url = get_cover_url(isbn)
-                gb_info = get_google_books_info(isbn)
-                description = (gb_info.get("description", "")[:180] + "…") if gb_info.get("description") else ""
+                cover_url = get_cover_url(isbn=isbn, title=title, author=author)
+                gb_info = get_google_books_info(isbn=isbn, title=title, author=author)
+                description = gb_info.get("description", "")
                 rating = gb_info.get("rating")
                 pages = gb_info.get("pages")
 

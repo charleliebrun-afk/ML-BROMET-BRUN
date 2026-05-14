@@ -4,7 +4,6 @@ import requests
 
 st.set_page_config(page_title="Library Recommender", page_icon="📖", layout="wide")
 
-# library design 
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500&display=swap');
@@ -196,7 +195,6 @@ div[data-testid="stNumberInput"] input {
 """, unsafe_allow_html=True)
 
 
-# load the datasets from GitHub
 @st.cache_data
 def load_data():
     base_url = "https://raw.githubusercontent.com/charleliebrun-afk/ML-BROMET-BRUN/main/kaggle_data"
@@ -205,7 +203,6 @@ def load_data():
     return interactions, items
 
 
-# load the precomputed recommendations from our ML model
 @st.cache_data
 def load_predictions():
     base_url = "https://raw.githubusercontent.com/charleliebrun-afk/ML-BROMET-BRUN/main/kaggle_data"
@@ -216,7 +213,6 @@ def load_predictions():
         return None
 
 
-# hit the Google Books API to get cover, page count etc.
 @st.cache_data
 def get_google_books_info(isbn):
     if pd.isna(isbn) or isbn == "":
@@ -240,7 +236,6 @@ def get_google_books_info(isbn):
     return {}
 
 
-# try OpenLibrary first / fall back to Google Books
 def get_cover_url(isbn):
     if pd.isna(isbn) or isbn == "":
         return None
@@ -256,15 +251,14 @@ def get_cover_url(isbn):
     return info.get("cover")
 
 
-# use model predictions if available, otherwise fall back to popularity
 def get_recommendations(user_id, items_df, interactions_df, predictions_df):
+    user_id = int(user_id)  # force int pour éviter les problèmes de type float vs int
     already_read = set(interactions_df[interactions_df["u"] == user_id]["i"].values)
     if predictions_df is not None:
         row = predictions_df[predictions_df["user_id"] == user_id]
         if not row.empty:
             rec_ids = list(map(int, row.iloc[0]["recommendation"].split()))
             return rec_ids, already_read
-    # fallback: most borrowed books the user hasn't read yet
     popular = (
         interactions_df[~interactions_df["i"].isin(already_read)]
         .groupby("i").size()
@@ -275,7 +269,6 @@ def get_recommendations(user_id, items_df, interactions_df, predictions_df):
     return popular["i"].tolist(), already_read
 
 
-# keep login state and user accounts alive across the session
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 if "username" not in st.session_state:
@@ -284,7 +277,6 @@ if "users_db" not in st.session_state:
     st.session_state.users_db = {}
 
 
-# ── LOGIN PAGE ────────────────────────────────────────────────────────────────
 if not st.session_state.logged_in:
     st.markdown("""
     <div class="login-container">
@@ -323,12 +315,10 @@ if not st.session_state.logged_in:
                     st.error("Invalid username or password.")
 
 
-# ── MAIN APP ──────────────────────────────────────────────────────────────────
 else:
     interactions, items = load_data()
     predictions = load_predictions()
 
-    # header + sign out button side by side
     col_title, col_logout = st.columns([6, 1])
     with col_title:
         st.markdown("<h1>Library</h1>", unsafe_allow_html=True)
@@ -342,7 +332,6 @@ else:
 
     st.markdown('<hr class="divider">', unsafe_allow_html=True)
 
-    # user ID input — key lets us read the value after button click
     st.markdown('<p style="font-size:0.85rem; color:#6a5a3a; margin-bottom:6px; letter-spacing:0.05em;">ENTER YOUR USER ID</p>', unsafe_allow_html=True)
     col1, col2 = st.columns([2, 1])
     with col1:
@@ -354,11 +343,9 @@ else:
         search = st.button("Get recommendations")
 
     if search:
-        # read the actual value from session state to avoid Streamlit reset bug
         user_id = st.session_state["user_id_input"]
         recommended_ids, already_read = get_recommendations(user_id, items, interactions, predictions)
 
-        # show what this user has already borrowed
         st.markdown('<p class="section-title">Reading history</p>', unsafe_allow_html=True)
         history = items[items["i"].isin(already_read)].head(8)
         if history.empty:
@@ -373,14 +360,10 @@ else:
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown('<p class="section-title">Recommended for you</p>', unsafe_allow_html=True)
 
-        # preserve the model's ranking order
         rec_books = items[items["i"].isin(recommended_ids)].copy()
         rec_books = rec_books.set_index("i").reindex(recommended_ids).reset_index()
 
-        # 5-column grid, 10 books total
         cols = st.columns(5)
         for i, (_, book) in enumerate(rec_books.head(10).iterrows()):
             with cols[i % 5]:
                 title = str(book.get("Title", "Unknown title")).rstrip("/").strip()
-
-                # clean up author and hide if empty or "nan"

@@ -251,6 +251,15 @@ def get_cover_url(isbn):
     return info.get("cover")
 
 
+def get_isbn(book, items_df):
+    for col in items_df.columns:
+        if "isbn" in col.lower():
+            val = book.get(col, "")
+            if val and str(val) != "nan":
+                return val
+    return ""
+
+
 def get_recommendations(user_id, items_df, interactions_df, predictions_df):
     user_id = int(user_id)
     already_read = set(interactions_df[interactions_df["u"] == user_id]["i"].values)
@@ -314,10 +323,15 @@ if not st.session_state.logged_in:
                 else:
                     st.error("Invalid username or password.")
 
-
 else:
     interactions, items = load_data()
     predictions = load_predictions()
+
+    # DEBUG — à supprimer une fois que tout fonctionne
+    if predictions is None:
+        st.warning("⚠️ final_sub.csv non chargé depuis GitHub — fallback sur livres populaires")
+    else:
+        st.success(f"✅ Predictions chargées : {len(predictions)} utilisateurs. Colonnes items : {list(items.columns)}")
 
     col_title, col_logout = st.columns([6, 1])
     with col_title:
@@ -369,23 +383,23 @@ else:
                 title = str(book.get("Title", "Unknown title")).rstrip("/").strip()
                 author = str(book.get("Author", "")).strip()
                 year = book.get("Year", "")
-                isbn = book.get("ISBN", "")
+                isbn = get_isbn(book, items)
 
                 cover_url = get_cover_url(isbn)
                 gb_info = get_google_books_info(isbn)
-                description = gb_info.get("description", "")[:180] + "…" if gb_info.get("description") else ""
+                description = (gb_info.get("description", "")[:180] + "…") if gb_info.get("description") else ""
                 rating = gb_info.get("rating")
                 pages = gb_info.get("pages")
 
                 cover_html = (
-                    f'<img class="book-cover" src="{cover_url}" alt="{title}">'
+                    f'<img class="book-cover" src="{cover_url}" alt="">'
                     if cover_url
                     else f'<div class="no-cover">{title[:40]}</div>'
                 )
 
                 meta_parts = []
                 if year and str(year) != "nan":
-                    meta_parts.append(str(int(float(year))) if str(year).replace(".","").isdigit() else str(year))
+                    meta_parts.append(str(int(float(str(year)))) if str(year).replace(".", "").isdigit() else str(year))
                 if pages:
                     meta_parts.append(f"{pages} pages")
                 if rating:

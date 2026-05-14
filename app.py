@@ -137,13 +137,15 @@ h1 {
 .reserved-badge {
     margin-top: 10px;
     background: rgba(232, 213, 163, 0.1);
-    border: 1px solid #6a5030;
+    border: 1px solid #6a5030 !important;
     border-radius: 6px;
     padding: 6px 10px;
     font-size: 0.7rem;
     color: #c8a87a;
     text-align: center;
     letter-spacing: 0.05em;
+    outline: none !important;
+    box-shadow: none !important;
 }
 
 .reservation-card {
@@ -247,6 +249,17 @@ div[data-testid="stButton"] button {
 }
 
 div[data-testid="stButton"] button:hover { background: #a07840 !important; }
+
+div[data-testid="stMarkdownContainer"] {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+div[data-testid="stMarkdownContainer"] > div {
+    border: none !important;
+    box-shadow: none !important;
+}
 
 .stRadio label { color: #9a8a6a !important; }
 .stRadio div { gap: 12px !important; }
@@ -357,7 +370,6 @@ def get_recommendations(user_id, items_df, interactions_df, predictions_df):
     return popular["i"].tolist(), already_read
 
 
-# session state init
 for key, val in {
     "logged_in": False,
     "username": "",
@@ -370,7 +382,7 @@ for key, val in {
         st.session_state[key] = val
 
 
-# ── LOGIN PAGE ────────────────────────────────────────────────────────────────
+# ── LOGIN ─────────────────────────────────────────────────────────────────────
 if not st.session_state.logged_in:
     st.markdown("""
     <div class="login-container">
@@ -428,7 +440,6 @@ else:
     predictions = load_predictions()
     user_id = st.session_state.user_id
 
-    # header
     col_title, col_res, col_logout = st.columns([5, 1.5, 1])
     with col_title:
         st.markdown("<h1>Library</h1>", unsafe_allow_html=True)
@@ -448,7 +459,6 @@ else:
             st.session_state.show_reservations = False
             st.rerun()
 
-    # reservations panel
     if st.session_state.show_reservations:
         st.markdown('<hr class="divider">', unsafe_allow_html=True)
         st.markdown('<p class="section-title">My reservations</p>', unsafe_allow_html=True)
@@ -468,7 +478,6 @@ else:
 
     st.markdown('<hr class="divider">', unsafe_allow_html=True)
 
-    # recommendations
     recommended_ids, already_read = get_recommendations(user_id, items, interactions, predictions)
 
     st.markdown('<p class="section-title">Reading history</p>', unsafe_allow_html=True)

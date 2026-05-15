@@ -4,7 +4,7 @@
 
 | File | Description |
 |---|---|
-| `projet APPLE.ipynb` | Main notebook used to build and evaluate the recommender system |
+| `projet APPLE_FIN.ipynb` | Main notebook used to build and evaluate the recommender system |
 | `app.py` | Python script used to run the Streamlit web interface |
 
 
@@ -24,3 +24,9 @@ The recommender interface is available online through Streamlit:
 A short presentation video of the project is available on YouTube:
 
 [Watch the project video](https://youtu.be/5mcQcNNL8JY)
+
+
+
+## Work Load
+Charlelie : projet apple_fin.ipynb structure, Vidéo, read-me and git hub. 50 % 
+Violaine : projet apple_fin.ipynb improvements + cleaning, app.p. 50 % 
